@@ -1,22 +1,11 @@
 # agent.py
-#
-# GitHub Copilot: Create a Python file for a LangChain AI agent.
-# It should import the configuration from config.py.
-# Based on config.LLM_PROVIDER, dynamically initialize either ChatOllama or ChatGoogleGenerativeAI.
-# Implement session history using RunnableWithMessageHistory.
-# The memory should also be dynamically chosen (SQLite for Ollama, a placeholder for cloud DB for Gemini).
-# Create a simple conversational chain.
-# Include an example of how to invoke the agent with a session ID.
-
 
 import langchain_core.prompts
 import langchain_core.runnables.history
 import langchain_google_genai
 import langchain_community.chat_models
 import langchain_core.messages
-import config  # Import our dynamic configuration
-
-
+import config
 
 class AIAgent:
 
