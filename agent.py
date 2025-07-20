@@ -20,26 +20,48 @@ import config  # Import our dynamic configuration
 
 class AIAgent:
     def __init__(self):
-        self.llm = self._initialize_llm()
+        self._initialize_llm()
         self.prompt = self._initialize_prompt()
         self.chain = self.prompt | self.llm
         self.with_message_history = self._initialize_message_history()
 
     def _initialize_llm(self):
-        """Initializes the LLM based on the configured provider."""
-        if config.config.LLM_PROVIDER == "ollama":
-            print(f"Initializing Ollama LLM: {config.config.OLLAMA_MODEL} at {config.config.OLLAMA_BASE_URL}")
-            return langchain_community.chat_models.ChatOllama(model=config.config.OLLAMA_MODEL, base_url=config.config.OLLAMA_BASE_URL)
-        elif config.config.LLM_PROVIDER == "gemini":
-            if not config.config.GEMINI_API_KEY:
+        """Initializes self.llm and self.current_model for Gemini or Ollama based on environment."""
+        import os
+        self.production_env = os.getenv("ENVIRONMENT", "development").lower() == "production"
+        if self.production_env:
+            # Google Gemini setup
+            import google.generativeai as genai
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key:
                 raise ValueError("GEMINI_API_KEY not set for production environment.")
-            print(f"Initializing Gemini LLM: {config.config.GEMINI_MODEL}")
-            return langchain_google_genai.ChatGoogleGenerativeAI(
-                model=config.config.GEMINI_MODEL,
-                google_api_key=config.config.GEMINI_API_KEY # LangChain picks from env by default, but explicit for clarity
-            )
+            genai.configure(api_key=api_key)
+            self.current_model = os.getenv("GEMINI_MODEL", "gemini-pro")
+            self.llm = genai.GenerativeModel(self.current_model)
         else:
-            raise ValueError(f"Unknown LLM provider: {config.config.LLM_PROVIDER}")
+            # Ollama setup
+            import ollama
+            ollama_host = os.getenv("OLLAMA_BASE_URL", "http://192.168.1.100:11434")
+            self.current_model = os.getenv("OLLAMA_MODEL", "gemma3")
+            self.llm = ollama.Client(host=ollama_host)
+
+    def generate_text(self, user_prompt: str) -> str:
+        """Generate text using Gemini (production) or Ollama (development) based on environment."""
+        try:
+            if self.production_env:
+                # Gemini
+                response = self.llm.generate_content(user_prompt)
+                return response.text
+            else:
+                # Ollama
+                response = self.llm.chat(
+                    model=self.current_model,
+                    messages=[{'role': 'user', 'content': user_prompt}]
+                )
+                return response['message']['content']
+        except Exception as e:
+            print(f"Error generating text: {e}")
+            return "Sorry, there was an error generating a response."
 
     def _initialize_prompt(self):
         """Defines the chat prompt template."""
