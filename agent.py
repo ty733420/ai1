@@ -29,11 +29,11 @@ class AIAgent:
     def __init__(self):
         self._initialize_llm()
         self.prompt = self._initialize_prompt()
-        self.chain = self.prompt | self.llm
+        self.chain = self.prompt | self.langchain_llm
         self.with_message_history = self._initialize_message_history()
 
     def _initialize_llm(self):
-        """Initializes self.llm and self.current_model for Gemini or Ollama based on environment."""
+        """Initializes both LangChain and direct API LLMs for Gemini or Ollama based on environment."""
         import os
         self.production_env = os.getenv("ENVIRONMENT", "development").lower() == "production"
         if self.production_env:
@@ -45,12 +45,24 @@ class AIAgent:
             genai.configure(api_key=api_key)
             self.current_model = os.getenv("GEMINI_MODEL", "gemini-pro")
             self.llm = genai.GenerativeModel(self.current_model)
+            # For LangChain chains, use langchain_google_genai.ChatGoogleGenerativeAI
+            import langchain_google_genai
+            self.langchain_llm = langchain_google_genai.ChatGoogleGenerativeAI(
+                model=self.current_model,
+                google_api_key=api_key
+            )
         else:
             # Ollama setup
             import ollama
             ollama_host = os.getenv("OLLAMA_BASE_URL", "http://192.168.1.100:11434")
             self.current_model = os.getenv("OLLAMA_MODEL", "gemma3")
             self.llm = ollama.Client(host=ollama_host)
+            # For LangChain chains, use langchain_community.chat_models.ChatOllama
+            import langchain_community.chat_models
+            self.langchain_llm = langchain_community.chat_models.ChatOllama(
+                model=self.current_model,
+                base_url=ollama_host
+            )
 
     def generate_text(self, user_prompt: str) -> str:
         """Generate text using Gemini (production) or Ollama (development) based on environment."""
