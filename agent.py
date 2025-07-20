@@ -19,6 +19,24 @@ import config  # Import our dynamic configuration
 
 
 class AIAgent:
+
+    def generate_text(self, user_prompt: str) -> str:
+        """Generate text using Gemini (production) or Ollama (development) based on environment."""
+        try:
+            if self.production_env:
+                # Gemini
+                response = self.llm.generate_content(user_prompt)
+                return response.text
+            else:
+                # Ollama
+                response = self.llm.chat(
+                    model=self.current_model,
+                    messages=[{'role': 'user', 'content': user_prompt}]
+                )
+                return response['message']['content']
+        except Exception as e:
+            print(f"Error generating text: {e}")
+            return "Sorry, there was an error generating a response."
     def __init__(self):
         self._initialize_llm()
         self.prompt = self._initialize_prompt()
