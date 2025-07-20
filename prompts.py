@@ -1,9 +1,13 @@
+
+import config
+logger = config.logger
 """
 prompts.py
 Prompt generation utilities for LLM tasks: summarization and question answering.
 """
 
 def get_summary_prompt(document_text: str, length: str, style: str) -> str:
+    logger.debug(f"Generating summary prompt (length={length}, style={style})")
     """
     Generate a detailed prompt for summarizing document_text.
     - length: 'short', 'medium', or 'long'
@@ -31,6 +35,7 @@ def get_summary_prompt(document_text: str, length: str, style: str) -> str:
     return prompt
 
 def get_qa_prompt(document_text: str, question: str) -> str:
+    logger.debug(f"Generating QA prompt for question: {question}")
     """
     Generate a prompt for answering a question strictly based on the provided document_text.
     The LLM must not use any outside knowledge or make up information.

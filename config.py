@@ -11,9 +11,25 @@
 import os
 from dotenv import load_dotenv
 
+import logging
+
 load_dotenv() # Load environment variables from .env file
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+
+# Logger configuration
+def get_logger():
+    log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
+    log_format = os.getenv("LOG_FORMAT", "%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logger = logging.getLogger("ai1")
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(log_format))
+        logger.addHandler(handler)
+    logger.setLevel(getattr(logging, log_level, logging.DEBUG))
+    return logger
+
+logger = get_logger()
 
 class Config:
     """Base configuration class."""
